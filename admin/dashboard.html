@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard | Admin Espacios 360</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <link rel="stylesheet" href="../css/admin.css">
+</head>
+<body>
+
+<!-- Confirm delete dialog -->
+<div class="confirm-dialog" id="confirmDialog">
+  <div class="confirm-box">
+    <i class="fa-solid fa-triangle-exclamation"></i>
+    <h3>¿Eliminar propiedad?</h3>
+    <p>Esta acción no se puede deshacer.</p>
+    <div class="confirm-btns">
+      <button class="btn-cancel" id="confirmCancel">Cancelar</button>
+      <button class="btn-confirm-del" id="confirmDel">Eliminar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast notification -->
+<div class="toast" id="toast"></div>
+
+<!-- Property modal -->
+<div class="modal-overlay" id="propModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h2 id="modalTitle">Nueva propiedad</h2>
+      <button class="modal-close" id="modalClose"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <form id="propForm">
+      <input type="hidden" id="editId">
+
+      <div class="form-section">
+        <div class="form-section-title">Información básica</div>
+        <div class="form-group"><label>Título *</label><input name="title" class="form-input" placeholder="Ej. Casa en San Pedro Garza García" required></div>
+        <div class="form-group"><label>Descripción</label><textarea name="description" class="form-input form-textarea" placeholder="Descripción detallada de la propiedad..."></textarea></div>
+        <div class="form-row">
+          <div class="form-group"><label>Tipo *</label>
+            <select name="type" class="form-input form-select" required>
+              <option value="casa">Casa</option>
+              <option value="departamento">Departamento</option>
+              <option value="terreno">Terreno</option>
+              <option value="local_comercial">Local Comercial</option>
+              <option value="oficina">Oficina</option>
+            </select>
+          </div>
+          <div class="form-group"><label>Operación *</label>
+            <select name="operation" class="form-input form-select">
+              <option value="venta">Venta</option>
+              <option value="renta">Renta</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>Precio (MXN)</label><input name="price" type="number" class="form-input" placeholder="0"></div>
+          <div class="form-group"><label>Estado</label>
+            <select name="status" class="form-input form-select">
+              <option value="disponible">Disponible</option>
+              <option value="en_proceso">En proceso</option>
+              <option value="vendida">Vendida</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group" style="display:flex;align-items:center;gap:10px">
+          <input type="checkbox" name="featured" id="featuredCheck" style="width:18px;height:18px;accent-color:var(--sky)">
+          <label for="featuredCheck" style="cursor:pointer;margin:0">Mostrar en propiedades destacadas (home)</label>
+        </div>
+      </div>
+
+      <div class="form-section">
+        <div class="form-section-title">Ubicación</div>
+        <div class="form-group"><label>Dirección</label><input name="address" class="form-input" placeholder="Calle, número, colonia"></div>
+        <div class="form-group"><label>Colonia / Fraccionamiento</label><input name="neighborhood" class="form-input" placeholder="Ej. Del Valle, Cumbres..."></div>
+        <div class="form-group">
+          <label>Coordenadas — haz clic en el mapa o escríbelas</label>
+          <div class="map-picker-wrap">
+            <div id="pickerMap"></div>
+            <button type="button" class="map-pick-btn" id="pickOnMap"><i class="fa-solid fa-crosshairs"></i> Seleccionar en mapa</button>
+          </div>
+          <div class="form-row" style="margin-top:8px">
+            <input name="lat" id="latInput" class="form-input" placeholder="Latitud (ej. 25.6519)">
+            <input name="lng" id="lngInput" class="form-input" placeholder="Longitud (ej. -100.4031)">
+          </div>
+        </div>
+      </div>
+
+      <div class="form-section">
+        <div class="form-section-title">Características</div>
+        <div class="form-row">
+          <div class="form-group"><label>Superficie (m²)</label><input name="area_m2" type="number" class="form-input" placeholder="0"></div>
+          <div class="form-group"><label>Recámaras</label><input name="bedrooms" type="number" class="form-input" placeholder="0"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>Baños</label><input name="bathrooms" type="number" step="0.5" class="form-input" placeholder="0"></div>
+          <div class="form-group"><label>Cajones de estacionamiento</label><input name="parking" type="number" class="form-input" placeholder="0"></div>
+        </div>
+      </div>
+
+      <div class="form-section">
+        <div class="form-section-title">Imágenes</div>
+        <div class="upload-area" id="uploadArea">
+          <i class="fa-solid fa-cloud-arrow-up"></i>
+          <p>Arrastra imágenes aquí o <strong style="color:var(--sky)">haz clic</strong> para seleccionar</p>
+          <small>JPG, PNG, WebP — máx. 5MB por imagen</small>
+          <input type="file" id="imgInput" multiple accept="image/*" style="display:none">
+        </div>
+        <div class="upload-previews" id="uploadPreviews"></div>
+        <div id="existingImgs" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:8px"></div>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn-cancel" id="modalCancelBtn">Cancelar</button>
+        <button type="submit" class="btn-save" id="btnSaveProp"><i class="fa-solid fa-floppy-disk"></i> Guardar propiedad</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Admin layout -->
+<div class="admin-layout">
+  <aside class="admin-sidebar">
+    <div class="sidebar-header">
+      <div style="display:flex;align-items:center;gap:10px">
+        <div class="logo-icon" style="width:38px;height:38px;border-radius:10px;background:rgba(255,255,255,.15);display:flex;align-items:center;justify-content:center">
+          <span style="color:#fff;font-weight:800;font-size:13px">360</span>
+        </div>
+        <div>
+          <div style="color:#fff;font-weight:700;font-size:.95rem">ESPACIOS</div>
+          <div style="color:var(--sky);font-size:.72rem;letter-spacing:1px">ADMIN PANEL</div>
+        </div>
+      </div>
+      <div class="mode-badge" id="modeBadge" style="display:none">DEMO</div>
+    </div>
+    <nav class="sidebar-nav">
+      <a href="dashboard.html" class="sidebar-link active"><i class="fa-solid fa-house"></i> Propiedades</a>
+      <a href="../index.html" target="_blank" class="sidebar-link"><i class="fa-solid fa-arrow-up-right-from-square"></i> Ver sitio</a>
+    </nav>
+    <div class="sidebar-footer">
+      <button class="btn-logout" id="btnLogout"><i class="fa-solid fa-right-from-bracket"></i> Cerrar sesión</button>
+    </div>
+  </aside>
+
+  <main class="admin-main">
+    <div class="admin-header">
+      <h1>Propiedades</h1>
+      <button class="btn-add" id="btnNewProp"><i class="fa-solid fa-plus"></i> Nueva propiedad</button>
+    </div>
+
+    <!-- Stats -->
+    <div class="stats-row" id="statsRow">
+      <div class="stat-card"><div class="stat-card-icon icon-total"><i class="fa-solid fa-building"></i></div><div><div class="stat-card-num" id="stTotal">—</div><div class="stat-card-lbl">Total</div></div></div>
+      <div class="stat-card"><div class="stat-card-icon icon-avail"><i class="fa-solid fa-circle-check"></i></div><div><div class="stat-card-num" id="stAvail">—</div><div class="stat-card-lbl">Disponibles</div></div></div>
+      <div class="stat-card"><div class="stat-card-icon icon-process"><i class="fa-solid fa-clock"></i></div><div><div class="stat-card-num" id="stProcess">—</div><div class="stat-card-lbl">En proceso</div></div></div>
+      <div class="stat-card"><div class="stat-card-icon icon-sold"><i class="fa-solid fa-check-double"></i></div><div><div class="stat-card-num" id="stSold">—</div><div class="stat-card-lbl">Vendidas</div></div></div>
+    </div>
+
+    <!-- Table -->
+    <div class="table-card">
+      <div class="table-toolbar">
+        <div class="table-search"><i class="fa-solid fa-magnifying-glass" style="color:var(--gray-400)"></i><input type="text" placeholder="Buscar..." id="tableSearch"></div>
+        <select class="table-filter" id="tableStatus">
+          <option value="">Todos los estados</option>
+          <option value="disponible">Disponible</option>
+          <option value="en_proceso">En proceso</option>
+          <option value="vendida">Vendida</option>
+        </select>
+        <select class="table-filter" id="tableType">
+          <option value="">Todos los tipos</option>
+          <option value="casa">Casa</option>
+          <option value="departamento">Departamento</option>
+          <option value="terreno">Terreno</option>
+          <option value="local_comercial">Local Comercial</option>
+          <option value="oficina">Oficina</option>
+        </select>
+      </div>
+      <div style="overflow-x:auto">
+        <table>
+          <thead>
+            <tr>
+              <th></th>
+              <th>Propiedad</th>
+              <th>Tipo</th>
+              <th>Precio</th>
+              <th>Estado</th>
+              <th>Destacada</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="propsTableBody">
+            <tr><td colspan="7" style="text-align:center;padding:32px;color:var(--gray-400)"><i class="fa-solid fa-spinner fa-spin"></i> Cargando...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="../js/config.js"></script>
+<script src="../js/app.js"></script>
+<script src="../js/map.js"></script>
+<script src="../js/admin.js"></script>
+<script>
+  let allProps = [], pendingImages = [], editingId = null, deleteTarget = null, pickerMap = null;
+
+  // ─── Auth guard ───────────────────────────────────────────────
+  (async () => {
+    await requireAdmin();
+    if (DEMO_MODE) document.getElementById('modeBadge').style.display = 'inline-block';
+    allProps = await getProperties();
+    renderStats(allProps);
+    renderTable(allProps);
+  })();
+
+  // ─── Stats ────────────────────────────────────────────────────
+  function renderStats(props) {
+    document.getElementById('stTotal').textContent   = props.length;
+    document.getElementById('stAvail').textContent   = props.filter(p => p.status === 'disponible').length;
+    document.getElementById('stProcess').textContent = props.filter(p => p.status === 'en_proceso').length;
+    document.getElementById('stSold').textContent    = props.filter(p => p.status === 'vendida').length;
+  }
+
+  // ─── Table ────────────────────────────────────────────────────
+  function filteredProps() {
+    const q  = document.getElementById('tableSearch').value.toLowerCase();
+    const st = document.getElementById('tableStatus').value;
+    const ty = document.getElementById('tableType').value;
+    return allProps.filter(p => {
+      if (q  && !p.title.toLowerCase().includes(q)) return false;
+      if (st && p.status !== st) return false;
+      if (ty && p.type   !== ty) return false;
+      return true;
+    });
+  }
+
+  function renderTable(props) {
+    const tbody = document.getElementById('propsTableBody');
+    if (!props.length) { tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:32px;color:var(--gray-400)">Sin propiedades</td></tr>'; return; }
+    tbody.innerHTML = props.map(p => {
+      const img = (p.images && p.images[0]) || '';
+      return `<tr>
+        <td>${img ? `<img class="td-img" src="${img}" alt="${p.title}" onerror="this.style.display='none'">` : '<div style="width:54px;height:40px;background:var(--gray-100);border-radius:6px"></div>'}</td>
+        <td><div class="td-title">${p.title}</div><div style="font-size:.78rem;color:var(--gray-400)">${p.neighborhood||''}</div></td>
+        <td style="font-size:.85rem">${typeLabel(p.type)}</td>
+        <td class="td-price" style="font-size:.9rem">${formatPrice(p.price, p.operation)}</td>
+        <td><span class="status-pill pill-${p.status}">${statusLabel(p.status)}</span></td>
+        <td style="text-align:center">${p.featured ? '<i class="fa-solid fa-star" style="color:var(--amber)"></i>' : '<i class="fa-regular fa-star" style="color:var(--gray-300)"></i>'}</td>
+        <td><div class="td-actions">
+          <button class="btn-icon btn-icon-edit" onclick="openEdit('${p.id}')" title="Editar"><i class="fa-solid fa-pen"></i></button>
+          <select class="btn-status" onchange="quickStatus('${p.id}',this.value);this.value=''">
+            <option value="" disabled selected>Estado</option>
+            <option value="disponible">✓ Disponible</option>
+            <option value="en_proceso">⏳ En proceso</option>
+            <option value="vendida">🏁 Vendida</option>
+          </select>
+          <button class="btn-icon btn-icon-del" onclick="confirmDelete('${p.id}')" title="Eliminar"><i class="fa-solid fa-trash"></i></button>
+        </div></td>
+      </tr>`;
+    }).join('');
+  }
+
+  ['tableSearch','tableStatus','tableType'].forEach(id => {
+    document.getElementById(id).addEventListener('input', () => renderTable(filteredProps()));
+    document.getElementById(id).addEventListener('change', () => renderTable(filteredProps()));
+  });
+
+  // ─── Modal open/close ──────────────────────────────────────────
+  function openModal(title = 'Nueva propiedad') {
+    document.getElementById('modalTitle').textContent = title;
+    document.getElementById('propModal').classList.add('open');
+    // Init picker map
+    setTimeout(() => {
+      if (!pickerMap) {
+        pickerMap = L.map('pickerMap', { center:[25.6866,-100.3161], zoom:11 });
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution:'© OpenStreetMap' }).addTo(pickerMap);
+      } else { pickerMap.invalidateSize(); }
+    }, 100);
+    pendingImages = [];
+    document.getElementById('uploadPreviews').innerHTML = '';
+  }
+
+  function closeModal() {
+    document.getElementById('propModal').classList.remove('open');
+    document.getElementById('propForm').reset();
+    document.getElementById('editId').value = '';
+    document.getElementById('existingImgs').innerHTML = '';
+    editingId = null;
+    pendingImages = [];
+    document.getElementById('uploadPreviews').innerHTML = '';
+  }
+
+  document.getElementById('btnNewProp').addEventListener('click', () => { editingId = null; openModal('Nueva propiedad'); });
+  document.getElementById('modalClose').addEventListener('click', closeModal);
+  document.getElementById('modalCancelBtn').addEventListener('click', closeModal);
+  document.getElementById('propModal').addEventListener('click', e => { if (e.target === document.getElementById('propModal')) closeModal(); });
+
+  async function openEdit(id) {
+    const p = allProps.find(x => String(x.id) === String(id));
+    if (!p) return;
+    editingId = id;
+    openModal('Editar propiedad');
+    const form = document.getElementById('propForm');
+    await new Promise(r => setTimeout(r, 150));
+    // Fill form fields
+    ['title','description','type','operation','price','status','address','neighborhood','lat','lng','area_m2','bedrooms','bathrooms','parking'].forEach(field => {
+      const el = form.querySelector(`[name="${field}"]`);
+      if (el && p[field] != null) el.value = p[field];
+    });
+    document.getElementById('featuredCheck').checked = !!p.featured;
+    // Show existing images
+    if (p.images && p.images.length) {
+      document.getElementById('existingImgs').innerHTML = p.images.map((src, i) =>
+        `<div class="upload-preview" style="position:relative">
+           <img src="${src}" onerror="this.src='img/placeholder.jpg'">
+           <button type="button" class="rm-img" onclick="this.parentElement.remove()" style="position:absolute;top:-4px;right:-4px;width:18px;height:18px;border-radius:50%;background:#EF4444;color:#fff;font-size:10px;display:flex;align-items:center;justify-content:center;border:none;cursor:pointer">
+             <i class="fa-solid fa-xmark"></i>
+           </button>
+         </div>`).join('');
+    }
+  }
+
+  // ─── Map coordinate picker ────────────────────────────────────
+  document.getElementById('pickOnMap').addEventListener('click', () => {
+    if (!pickerMap) return;
+    pickerMap.getContainer().style.cursor = 'crosshair';
+    pickerMap.once('click', e => {
+      pickerMap.getContainer().style.cursor = '';
+      const lat = e.latlng.lat.toFixed(6), lng = e.latlng.lng.toFixed(6);
+      document.getElementById('latInput').value = lat;
+      document.getElementById('lngInput').value = lng;
+      L.marker([lat, lng]).addTo(pickerMap).bindPopup('Ubicación seleccionada').openPopup();
+    });
+  });
+
+  // ─── Image upload ─────────────────────────────────────────────
+  const uploadArea = document.getElementById('uploadArea');
+  uploadArea.addEventListener('click', () => document.getElementById('imgInput').click());
+  uploadArea.addEventListener('dragover', e => { e.preventDefault(); uploadArea.classList.add('dragover'); });
+  uploadArea.addEventListener('dragleave', () => uploadArea.classList.remove('dragover'));
+  uploadArea.addEventListener('drop', e => { e.preventDefault(); uploadArea.classList.remove('dragover'); handleFiles(e.dataTransfer.files); });
+  document.getElementById('imgInput').addEventListener('change', e => handleFiles(e.target.files));
+
+  function handleFiles(files) {
+    Array.from(files).forEach(file => {
+      if (!file.type.startsWith('image/')) return;
+      pendingImages.push(file);
+      const reader = new FileReader();
+      reader.onload = ev => {
+        const wrap = document.createElement('div');
+        wrap.className = 'upload-preview';
+        wrap.innerHTML = `<img src="${ev.target.result}"><button type="button" class="rm-img" style="position:absolute;top:-4px;right:-4px;width:18px;height:18px;border-radius:50%;background:#EF4444;color:#fff;font-size:10px;display:flex;align-items:center;justify-content:center;border:none;cursor:pointer"><i class="fa-solid fa-xmark"></i></button>`;
+        wrap.querySelector('.rm-img').addEventListener('click', () => {
+          const idx = Array.from(document.getElementById('uploadPreviews').children).indexOf(wrap);
+          pendingImages.splice(idx, 1);
+          wrap.remove();
+        });
+        document.getElementById('uploadPreviews').appendChild(wrap);
+      };
+      reader.readAsDataURL(file);
+    });
+  }
+
+  // ─── Save property ────────────────────────────────────────────
+  document.getElementById('propForm').addEventListener('submit', async e => {
+    e.preventDefault();
+    const btn = document.getElementById('btnSaveProp');
+    btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Guardando...';
+
+    const form = e.target;
+    const data = {};
+    new FormData(form).forEach((v, k) => { if (k !== 'image_files') data[k] = v === '' ? null : v; });
+    ['price','area_m2','bedrooms','bathrooms','parking','lat','lng'].forEach(f => { if (data[f]) data[f] = parseFloat(data[f]); });
+    data.featured = document.getElementById('featuredCheck').checked;
+
+    // Upload pending images
+    const imageUrls = [];
+    for (const file of pendingImages) {
+      const res = await uploadImage(file);
+      if (res.ok) imageUrls.push(res.url);
+    }
+    // Keep existing images shown
+    const existingImgEls = document.getElementById('existingImgs').querySelectorAll('img');
+    existingImgEls.forEach(img => imageUrls.unshift(img.src));
+    if (imageUrls.length) data.images = imageUrls;
+
+    const result = await saveProperty(data, editingId || null);
+    btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Guardar propiedad';
+
+    if (result.ok) {
+      showToast('Propiedad guardada correctamente', 'success');
+      closeModal();
+      allProps = await getProperties();
+      renderStats(allProps);
+      renderTable(filteredProps());
+    } else {
+      showToast('Error: ' + (result.message || 'No se pudo guardar'), 'error');
+    }
+  });
+
+  // ─── Quick status change ──────────────────────────────────────
+  async function quickStatus(id, status) {
+    const res = await updateStatus(id, status);
+    if (res.ok) {
+      allProps = await getProperties();
+      renderStats(allProps);
+      renderTable(filteredProps());
+      showToast('Estado actualizado', 'success');
+    }
+  }
+
+  // ─── Delete ───────────────────────────────────────────────────
+  function confirmDelete(id) {
+    deleteTarget = id;
+    document.getElementById('confirmDialog').classList.add('show');
+  }
+  document.getElementById('confirmCancel').addEventListener('click', () => {
+    document.getElementById('confirmDialog').classList.remove('show');
+    deleteTarget = null;
+  });
+  document.getElementById('confirmDel').addEventListener('click', async () => {
+    document.getElementById('confirmDialog').classList.remove('show');
+    if (!deleteTarget) return;
+    const res = await deleteProperty(deleteTarget);
+    if (res.ok) {
+      allProps = await getProperties();
+      renderStats(allProps);
+      renderTable(filteredProps());
+      showToast('Propiedad eliminada', 'success');
+    } else {
+      showToast('Error al eliminar', 'error');
+    }
+    deleteTarget = null;
+  });
+
+  // ─── Logout ───────────────────────────────────────────────────
+  document.getElementById('btnLogout').addEventListener('click', adminLogout);
+
+  // ─── Toast ───────────────────────────────────────────────────
+  function showToast(msg, type = '') {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.className = `toast toast-${type} show`;
+    setTimeout(() => t.classList.remove('show'), 3000);
+  }
+</script>
+</body>
+</html>

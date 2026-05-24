@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Propiedades | Espacios 360 Monterrey</title>
+  <meta name="description" content="Explora propiedades en Monterrey y Nuevo León. Filtra por tipo, precio y zona.">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <link rel="stylesheet" href="css/styles.css">
+  <style>
+    body { padding-top: var(--nav-h); }
+    .navbar { background: var(--white) !important; box-shadow: 0 2px 20px rgba(26,43,95,.1); }
+    .navbar .logo-top { color: var(--navy) !important; }
+    .navbar .logo-bottom { color: var(--sky) !important; }
+    .navbar .nav-link { color: var(--gray-600) !important; }
+    .navbar .nav-link:hover { background: var(--sky-light) !important; color: var(--navy) !important; }
+    .overlay-bg { display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:800; }
+    .overlay-bg.show { display:block; }
+    .filter-toggle-btn { display:none;align-items:center;gap:8px;padding:10px 16px;border-radius:8px;border:1.5px solid var(--gray-200);color:var(--gray-600);font-size:.9rem;font-weight:500; }
+    @media(max-width:900px){ .filter-toggle-btn{display:flex} }
+    #propMap { width:100%;height:100%; }
+    .view-map { display:none; }
+    .view-map.active { display:grid; }
+    .view-list.hidden { display:none; }
+  </style>
+</head>
+<body>
+<div class="overlay-bg" id="overlayBg"></div>
+
+<nav class="navbar solid" id="navbar">
+  <div class="container">
+    <a href="index.html" class="logo">
+      <div class="logo-icon"><span class="logo-360">360</span></div>
+      <div class="logo-text"><span class="logo-top">ESPACIOS</span><span class="logo-bottom">BIENES RAÍCES</span></div>
+    </a>
+    <div class="nav-links" id="navLinks">
+      <a href="index.html" class="nav-link">Inicio</a>
+      <a href="propiedades.html" class="nav-link active">Propiedades</a>
+      <a href="propiedades.html?vista=mapa" class="nav-link">Mapa</a>
+      <a href="guardados.html" class="nav-link"><i class="fa-regular fa-bookmark"></i> Guardados <span class="bookmark-count" id="bookmarkCount" style="display:none">0</span></a>
+      <a href="mailto:contacto@espacios360.mx" class="nav-link">Contacto</a>
+    </div>
+    <button class="hamburger" id="hamburger"><span></span><span></span><span></span></button>
+  </div>
+</nav>
+
+<!-- LIST VIEW -->
+<div class="view-list" id="viewList">
+  <div class="listings-layout">
+    <aside class="filters-panel" id="filtersPanel">
+      <div class="filter-section">
+        <div class="search-field" style="background:#fff;margin-bottom:0">
+          <i class="fa-solid fa-magnifying-glass"></i>
+          <input type="text" placeholder="Buscar colonia, zona..." id="filterSearch" style="border:none;background:none;outline:none;width:100%;font-size:.9rem">
+        </div>
+      </div>
+      <div class="filter-section">
+        <h4>Operación</h4>
+        <div class="filter-chips">
+          <button class="chip active" data-f="operacion" data-v="">Todas</button>
+          <button class="chip" data-f="operacion" data-v="venta">Venta</button>
+          <button class="chip" data-f="operacion" data-v="renta">Renta</button>
+        </div>
+      </div>
+      <div class="filter-section">
+        <h4>Estado</h4>
+        <div class="filter-chips">
+          <button class="chip active" data-f="status" data-v="">Todas</button>
+          <button class="chip" data-f="status" data-v="disponible">Disponible</button>
+          <button class="chip" data-f="status" data-v="en_proceso">En proceso</button>
+          <button class="chip" data-f="status" data-v="vendida">Vendida</button>
+        </div>
+      </div>
+      <div class="filter-section">
+        <h4>Tipo</h4>
+        <div class="filter-chips">
+          <button class="chip active" data-f="type" data-v="">Todos</button>
+          <button class="chip" data-f="type" data-v="casa">Casa</button>
+          <button class="chip" data-f="type" data-v="departamento">Depa</button>
+          <button class="chip" data-f="type" data-v="terreno">Terreno</button>
+          <button class="chip" data-f="type" data-v="local_comercial">Local</button>
+          <button class="chip" data-f="type" data-v="oficina">Oficina</button>
+        </div>
+      </div>
+      <div class="filter-section">
+        <h4>Precio (MXN)</h4>
+        <div class="price-row">
+          <input type="number" class="filter-input" id="priceMin" placeholder="Mínimo">
+          <input type="number" class="filter-input" id="priceMax" placeholder="Máximo">
+        </div>
+      </div>
+      <button class="btn-reset" id="btnReset"><i class="fa-solid fa-rotate-left"></i> Limpiar filtros</button>
+    </aside>
+
+    <div class="listings-panel">
+      <div class="listings-toolbar">
+        <div style="display:flex;gap:8px;align-items:center">
+          <button class="filter-toggle-btn" id="filterToggle"><i class="fa-solid fa-sliders"></i> Filtros</button>
+          <button class="filter-toggle-btn" id="btnShowMap"><i class="fa-solid fa-map"></i> Ver mapa</button>
+        </div>
+        <p class="results-count"><strong id="resultsNum">—</strong> propiedades</p>
+        <div class="view-toggle">
+          <button class="view-btn active" id="btnGrid" title="Cuadrícula"><i class="fa-solid fa-grip"></i></button>
+          <button class="view-btn" id="btnList" title="Lista"><i class="fa-solid fa-list"></i></button>
+        </div>
+      </div>
+      <div id="propsContainer" class="properties-grid">
+        <div class="card-skeleton"></div><div class="card-skeleton"></div><div class="card-skeleton"></div><div class="card-skeleton"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MAP VIEW -->
+<div class="view-map map-layout" id="viewMap">
+  <div class="map-sidebar">
+    <div class="map-sidebar-header">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <h3>Propiedades</h3>
+        <button id="btnShowList" style="font-size:.82rem;color:var(--sky);font-weight:600"><i class="fa-solid fa-list"></i> Ver lista</button>
+      </div>
+      <div class="map-sidebar-search" style="margin-top:10px">
+        <i class="fa-solid fa-magnifying-glass" style="color:var(--gray-400)"></i>
+        <input type="text" placeholder="Buscar..." id="mapSearch" style="border:none;outline:none;font-size:.9rem;flex:1">
+      </div>
+      <div class="filter-chips" style="margin-top:8px;gap:4px">
+        <button class="chip active" style="font-size:.75rem;padding:4px 10px" data-ms="">Todas</button>
+        <button class="chip" style="font-size:.75rem;padding:4px 10px" data-ms="disponible">Disponible</button>
+        <button class="chip" style="font-size:.75rem;padding:4px 10px" data-ms="en_proceso">En proceso</button>
+      </div>
+    </div>
+    <div class="map-list" id="mapList"></div>
+  </div>
+  <div class="map-container"><div id="propMap"></div></div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="js/config.js"></script>
+<script src="js/bookmarks.js"></script>
+<script src="js/app.js"></script>
+<script src="js/map.js"></script>
+<script>
+  const filters = { q:'', operacion:'', status:'', type:'', priceMin:'', priceMax:'' };
+  let allProps = [], viewMode = 'grid', mapInited = false;
+  const sp = new URLSearchParams(location.search);
+
+  (async () => {
+    if (sp.get('q'))         { filters.q = sp.get('q'); document.getElementById('filterSearch').value = filters.q; }
+    if (sp.get('tipo'))      { filters.type = sp.get('tipo'); setChip('type', filters.type); }
+    if (sp.get('operacion')) { filters.operacion = sp.get('operacion'); setChip('operacion', filters.operacion); }
+    allProps = await getProperties();
+    updateBookmarkCount();
+    if (sp.get('vista') === 'mapa') showMap(); else renderList();
+  })();
+
+  function applyFilters() {
+    return allProps.filter(p => {
+      if (filters.q && !(`${p.title} ${p.neighborhood||''} ${p.address||''}`).toLowerCase().includes(filters.q.toLowerCase())) return false;
+      if (filters.operacion && p.operation !== filters.operacion) return false;
+      if (filters.status    && p.status    !== filters.status)    return false;
+      if (filters.type      && p.type      !== filters.type)      return false;
+      if (filters.priceMin  && p.price < +filters.priceMin)       return false;
+      if (filters.priceMax  && p.price > +filters.priceMax)       return false;
+      return true;
+    });
+  }
+
+  function renderList() {
+    const filtered = applyFilters();
+    document.getElementById('resultsNum').textContent = filtered.length;
+    const c = document.getElementById('propsContainer');
+    if (!filtered.length) { c.innerHTML = '<p class="no-props">Sin resultados. Intenta otros filtros.</p>'; return; }
+    if (viewMode === 'grid') {
+      c.className = 'properties-grid';
+      c.innerHTML = filtered.map(p => propertyCard(p)).join('');
+    } else {
+      c.className = 'properties-list';
+      c.innerHTML = filtered.map(p => `
+        <div class="prop-list-item">
+          <div class="prop-list-img" style="position:relative">
+            <img src="${(p.images&&p.images[0])||'img/placeholder.jpg'}" alt="${p.title}" onerror="this.src='img/placeholder.jpg'" style="width:100%;height:100%;object-fit:cover">
+            <span class="badge badge-${p.status}" style="position:absolute;top:8px;left:8px">${statusLabel(p.status)}</span>
+          </div>
+          <div class="prop-list-body">
+            <div class="card-price">${formatPrice(p.price,p.operation)}<span class="op-tag op-${p.operation}">${p.operation==='venta'?'Venta':'Renta'}</span></div>
+            <h3 class="card-title"><a href="propiedad.html?id=${p.id}">${p.title}</a></h3>
+            <p class="card-location"><i class="fa-solid fa-location-dot"></i> ${p.neighborhood||'Monterrey, N.L.'}</p>
+            <div class="card-details">
+              ${p.bedrooms?`<span><i class="fa-solid fa-bed"></i> ${p.bedrooms}</span>`:''}
+              ${p.bathrooms?`<span><i class="fa-solid fa-bath"></i> ${p.bathrooms}</span>`:''}
+              ${p.area_m2?`<span><i class="fa-solid fa-ruler-combined"></i> ${p.area_m2} m²</span>`:''}
+            </div>
+          </div>
+        </div>`).join('');
+    }
+    initBookmarkButtons();
+  }
+
+  function showMap() {
+    document.getElementById('viewList').classList.add('hidden');
+    document.getElementById('viewMap').classList.add('active');
+    if (!mapInited) {
+      setTimeout(() => { initMap('propMap'); renderMapSidebar(allProps); mapInited = true; }, 60);
+    }
+  }
+  function showList() {
+    document.getElementById('viewMap').classList.remove('active');
+    document.getElementById('viewList').classList.remove('hidden');
+    renderList();
+  }
+
+  function renderMapSidebar(props) {
+    addPropertyMarkers(props, p => {
+      document.querySelectorAll('.map-list-item').forEach(el => el.classList.remove('active'));
+      document.querySelector(`.map-list-item[data-id="${p.id}"]`)?.classList.add('active');
+      flyToProperty(p.lat, p.lng);
+    });
+    document.getElementById('mapList').innerHTML = props.map(p => `
+      <div class="map-list-item" data-id="${p.id}" data-lat="${p.lat}" data-lng="${p.lng}">
+        <img class="map-list-img" src="${(p.images&&p.images[0])||'img/placeholder.jpg'}" alt="${p.title}" onerror="this.src='img/placeholder.jpg'">
+        <div class="map-list-info">
+          <div class="map-list-price">${formatPrice(p.price,p.operation)}</div>
+          <div class="map-list-title"><a href="propiedad.html?id=${p.id}" style="color:var(--gray-800)">${p.title}</a></div>
+          <div class="map-list-loc"><i class="fa-solid fa-location-dot" style="color:var(--sky)"></i> ${p.neighborhood||'Monterrey'}</div>
+          <span class="status-pill pill-${p.status}" style="margin-top:4px;display:inline-flex">${statusLabel(p.status)}</span>
+        </div>
+      </div>`).join('');
+    document.querySelectorAll('.map-list-item').forEach(item => {
+      item.addEventListener('click', () => {
+        const lat = +item.dataset.lat, lng = +item.dataset.lng;
+        if (lat && lng) flyToProperty(lat, lng);
+        document.querySelectorAll('.map-list-item').forEach(x => x.classList.remove('active'));
+        item.classList.add('active');
+      });
+    });
+  }
+
+  function setChip(f, v) {
+    document.querySelectorAll(`[data-f="${f}"]`).forEach(c => c.classList.toggle('active', c.dataset.v === v));
+  }
+
+  document.querySelectorAll('[data-f]').forEach(c => c.addEventListener('click', () => {
+    filters[c.dataset.f] = c.dataset.v;
+    setChip(c.dataset.f, c.dataset.v);
+    renderList();
+  }));
+  document.querySelectorAll('[data-ms]').forEach(c => c.addEventListener('click', () => {
+    document.querySelectorAll('[data-ms]').forEach(x => x.classList.remove('active'));
+    c.classList.add('active');
+    const f = c.dataset.ms ? allProps.filter(p => p.status === c.dataset.ms) : allProps;
+    renderMapSidebar(f);
+  }));
+
+  let st;
+  document.getElementById('filterSearch').addEventListener('input', e => { clearTimeout(st); st = setTimeout(() => { filters.q = e.target.value; renderList(); }, 300); });
+  document.getElementById('mapSearch').addEventListener('input', e => {
+    clearTimeout(st);
+    st = setTimeout(() => {
+      const q = e.target.value.toLowerCase();
+      const f = q ? allProps.filter(p => p.title.toLowerCase().includes(q)||(p.neighborhood||'').toLowerCase().includes(q)) : allProps;
+      renderMapSidebar(f);
+    }, 300);
+  });
+  document.getElementById('priceMin').addEventListener('input', e => { filters.priceMin = e.target.value; renderList(); });
+  document.getElementById('priceMax').addEventListener('input', e => { filters.priceMax = e.target.value; renderList(); });
+  document.getElementById('btnReset').addEventListener('click', () => {
+    Object.keys(filters).forEach(k => filters[k] = '');
+    document.getElementById('filterSearch').value = '';
+    document.getElementById('priceMin').value = '';
+    document.getElementById('priceMax').value = '';
+    document.querySelectorAll('[data-f]').forEach(c => c.classList.toggle('active', c.dataset.v === ''));
+    renderList();
+  });
+  document.getElementById('btnGrid').addEventListener('click', () => { viewMode='grid'; document.getElementById('btnGrid').classList.add('active'); document.getElementById('btnList').classList.remove('active'); renderList(); });
+  document.getElementById('btnList').addEventListener('click', () => { viewMode='list'; document.getElementById('btnList').classList.add('active'); document.getElementById('btnGrid').classList.remove('active'); renderList(); });
+  document.getElementById('btnShowMap').addEventListener('click', showMap);
+  document.getElementById('btnShowList').addEventListener('click', showList);
+  document.getElementById('filterToggle').addEventListener('click', () => { document.getElementById('filtersPanel').classList.toggle('open'); document.getElementById('overlayBg').classList.toggle('show'); });
+  document.getElementById('overlayBg').addEventListener('click', () => { document.getElementById('filtersPanel').classList.remove('open'); document.getElementById('overlayBg').classList.remove('show'); });
+  document.getElementById('hamburger').addEventListener('click', () => document.getElementById('navLinks').classList.toggle('open'));
+</script>
+</body>
+</html>

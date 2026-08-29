@@ -5,10 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Espacios 360 | Bienes Raíces en Monterrey, Nuevo León</title>
   <meta name="description" content="Encuentra tu propiedad ideal en Monterrey y Nuevo León. Casas, departamentos, terrenos y locales en venta y renta. Espacios 360.">
-  <meta name="keywords" content="bienes raices monterrey, casas en venta monterrey, departamentos monterrey, propiedades nuevo leon, terrenos monterrey, inmobiliaria monterrey, san pedro garza garcia">
-  <meta property="og:title" content="Espacios 360 | Bienes Raíces en Monterrey">
-  <meta property="og:description" content="Tu aliado en bienes raíces en Monterrey y Nuevo León">
-  <meta property="og:type" content="website">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
@@ -17,7 +13,8 @@
 </head>
 <body>
 
-  <nav class="navbar" id="navbar">
+  <!-- NAVBAR: Solid class applied by default to ensure text is visible on the light background -->
+  <nav class="navbar solid" id="navbar">
     <div class="container">
       <a href="index.html" class="logo">
         <div class="logo-icon"><span class="logo-360">360</span></div>
@@ -39,21 +36,22 @@
     </div>
   </nav>
 
-  <section class="hero">
-    <div class="hero-overlay"></div>
-    <div class="hero-content">
-      <h1 class="hero-title">Encuentra tu espacio<br><span class="hero-highlight">ideal en Monterrey</span></h1>
-      <p class="hero-subtitle">Casas, departamentos, terrenos y locales en Monterrey y Nuevo León</p>
+  <!-- NEW COMPACT SEARCH SECTION -->
+  <section class="compact-hero">
+    <div class="container compact-hero-content">
+      <h1 class="hero-title">Encuentra tu espacio en <span class="hero-highlight">Monterrey</span></h1>
+      
+      <!-- Reusing your exact search component HTML from styles.css -->
       <div class="hero-search">
         <form class="search-form" id="heroSearch">
           <div class="search-tabs">
-            <button type="button" class="search-tab active" data-op="venta">En Venta</button>
-            <button type="button" class="search-tab" data-op="renta">En Renta</button>
+            <button type="button" class="search-tab active" data-op="venta">Venta</button>
+            <button type="button" class="search-tab" data-op="renta">Renta</button>
           </div>
           <div class="search-inputs">
             <div class="search-field">
               <i class="fa-solid fa-magnifying-glass"></i>
-              <input type="text" placeholder="Colonia, municipio o zona..." id="searchQuery">
+              <input type="text" placeholder="Colonia o municipio..." id="searchQuery">
             </div>
             <div class="search-field">
               <i class="fa-solid fa-house"></i>
@@ -62,7 +60,7 @@
                 <option value="casa">Casa</option>
                 <option value="departamento">Departamento</option>
                 <option value="terreno">Terreno</option>
-                <option value="local_comercial">Local Comercial</option>
+                <option value="local_comercial">Local</option>
                 <option value="oficina">Oficina</option>
               </select>
             </div>
@@ -71,76 +69,55 @@
         </form>
       </div>
     </div>
-    <div class="hero-stats">
-      <div class="stat"><span class="stat-num" id="statProps">—</span><span class="stat-label">Propiedades</span></div>
-      <div class="stat-divider"></div>
-      <div class="stat"><span class="stat-num">98%</span><span class="stat-label">Clientes satisfechos</span></div>
-      <div class="stat-divider"></div>
-      <div class="stat"><span class="stat-num">+10</span><span class="stat-label">Años de experiencia</span></div>
-      <div class="stat-divider"></div>
-      <div class="stat"><span class="stat-num">MTY</span><span class="stat-label">Monterrey, N.L.</span></div>
-    </div>
   </section>
 
-  <section class="section featured-section">
+  <!-- PROPERTIES IMMEDIATELY FOLLOWING SEARCH -->
+  <section class="section immediate-properties">
     <div class="container">
-      <div class="section-header">
-        <span class="section-tag">Propiedades destacadas</span>
-        <h2 class="section-title">Las mejores oportunidades<br>en Monterrey</h2>
-        <p class="section-sub">Selección especial de propiedades en las zonas más cotizadas de Nuevo León</p>
+      <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 24px;">
+        <div>
+          <h2 class="section-title" style="margin-bottom: 4px;">Recién Añadidas</h2>
+          <p class="section-sub">Explora <span id="statProps">nuestras</span> propiedades disponibles en Monterrey</p>
+        </div>
+        <a href="propiedades.html" class="btn-outline">Ver mapa <i class="fa-solid fa-map"></i></a>
       </div>
+      
       <div class="properties-grid" id="featuredGrid">
         <div class="card-skeleton"></div>
         <div class="card-skeleton"></div>
         <div class="card-skeleton"></div>
+        <div class="card-skeleton"></div>
+        <div class="card-skeleton"></div>
+        <div class="card-skeleton"></div>
       </div>
+      
       <div class="section-cta">
-        <a href="propiedades.html" class="btn-outline">Ver todas las propiedades <i class="fa-solid fa-arrow-right"></i></a>
+        <a href="propiedades.html" class="btn-primary">Ver todas las propiedades <i class="fa-solid fa-arrow-right"></i></a>
       </div>
     </div>
   </section>
 
-  <section class="section map-preview-section">
-    <div class="container">
-      <div class="map-preview-content">
-        <div class="map-preview-text">
-          <span class="section-tag">Busca por mapa</span>
-          <h2 class="section-title">Explora propiedades<br>en el mapa</h2>
-          <p class="section-sub">Encuentra propiedades por zona en Monterrey y su área metropolitana. Visualiza disponibilidad en tiempo real con nuestro mapa interactivo.</p>
-          <a href="propiedades.html?vista=mapa" class="btn-primary"><i class="fa-solid fa-map-location-dot"></i> Abrir mapa</a>
-        </div>
-        <div class="map-preview-img">
-          <div class="map-mockup">
-            <div class="map-pin pin-1"><i class="fa-solid fa-location-dot"></i></div>
-            <div class="map-pin pin-2 pin-sold"><i class="fa-solid fa-location-dot"></i></div>
-            <div class="map-pin pin-3 pin-process"><i class="fa-solid fa-location-dot"></i></div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <section class="section how-section">
+  <!-- HOW IT WORKS (Moved below the main feed) -->
+  <section class="section how-section" style="background: var(--gray-50);">
     <div class="container">
       <div class="section-header">
-        <span class="section-tag">¿Cómo funciona?</span>
-        <h2 class="section-title">Tu propiedad en 3 pasos</h2>
+        <h2 class="section-title">¿Por qué elegir Espacios 360?</h2>
       </div>
       <div class="steps-grid">
         <div class="step">
           <div class="step-icon"><i class="fa-solid fa-magnifying-glass-location"></i></div>
           <h3>1. Explora</h3>
-          <p>Busca entre nuestras propiedades por zona, tipo o precio. Usa el mapa para encontrar la ubicación perfecta en Monterrey.</p>
+          <p>Busca entre nuestras propiedades por zona, tipo o precio usando nuestra plataforma optimizada.</p>
         </div>
         <div class="step">
           <div class="step-icon"><i class="fa-brands fa-whatsapp"></i></div>
           <h3>2. Contacta</h3>
-          <p>¿Te interesa una propiedad? Escríbenos por WhatsApp o correo. Te respondemos en menos de 24 horas.</p>
+          <p>Escríbenos por WhatsApp o correo. Te respondemos en menos de 24 horas.</p>
         </div>
         <div class="step">
           <div class="step-icon"><i class="fa-solid fa-handshake"></i></div>
           <h3>3. Cierra</h3>
-          <p>Te acompañamos en todo el proceso hasta que tengas las llaves. Asesoría completa de principio a fin.</p>
+          <p>Te acompañamos en todo el proceso hasta que tengas las llaves. Asesoría completa.</p>
         </div>
       </div>
     </div>
@@ -151,7 +128,7 @@
       <h2>¿Tienes una propiedad que quieres vender o rentar?</h2>
       <p>Contáctanos y te ayudamos a encontrar al mejor comprador o arrendatario en Monterrey.</p>
       <div class="cta-buttons">
-        <a href="https://wa.me/528112345678?text=Hola%2C%20quiero%20información%20sobre%20sus%20servicios" target="_blank" class="btn-whatsapp">
+        <a href="https://wa.me/528112345678" target="_blank" class="btn-whatsapp">
           <i class="fa-brands fa-whatsapp"></i> WhatsApp
         </a>
         <a href="mailto:contacto@espacios360.mx" class="btn-outline-white">
@@ -165,43 +142,17 @@
     <div class="container">
       <div class="footer-grid">
         <div class="footer-brand">
-          <a href="index.html" class="logo" style="margin-bottom:16px;display:flex">
+          <a href="index.html" class="logo" style="margin-bottom:16px;">
             <div class="logo-icon logo-icon-sm"><span class="logo-360">360</span></div>
-            <div class="logo-text"><span class="logo-top" style="color:#fff">ESPACIOS</span><span class="logo-bottom" style="color:#3AACDC">BIENES RAÍCES</span></div>
+            <div class="logo-text"><span class="logo-top">ESPACIOS</span><span class="logo-bottom">BIENES RAÍCES</span></div>
           </a>
           <p>Tu aliado en bienes raíces en Monterrey y Nuevo León. Más de 10 años conectando personas con sus espacios ideales.</p>
-          <div class="social-links">
-            <a href="#" aria-label="Facebook"><i class="fa-brands fa-facebook"></i></a>
-            <a href="#" aria-label="Instagram"><i class="fa-brands fa-instagram"></i></a>
-            <a href="#" aria-label="LinkedIn"><i class="fa-brands fa-linkedin"></i></a>
-          </div>
-        </div>
-        <div class="footer-links">
-          <h4>Propiedades</h4>
-          <a href="propiedades.html?tipo=casa">Casas</a>
-          <a href="propiedades.html?tipo=departamento">Departamentos</a>
-          <a href="propiedades.html?tipo=terreno">Terrenos</a>
-          <a href="propiedades.html?tipo=local_comercial">Locales Comerciales</a>
-          <a href="propiedades.html?tipo=oficina">Oficinas</a>
-        </div>
-        <div class="footer-links">
-          <h4>Zonas</h4>
-          <a href="propiedades.html?q=San+Pedro">San Pedro Garza García</a>
-          <a href="propiedades.html?q=Cumbres">Cumbres</a>
-          <a href="propiedades.html?q=Valle">Valle Oriente</a>
-          <a href="propiedades.html?q=Tecnologico">Tecnológico</a>
-          <a href="propiedades.html?q=San+Nicolas">San Nicolás de los Garza</a>
         </div>
         <div class="footer-contact">
           <h4>Contacto</h4>
           <p><i class="fa-solid fa-phone"></i> +52 81 1234 5678</p>
           <p><i class="fa-solid fa-envelope"></i> contacto@espacios360.mx</p>
-          <p><i class="fa-solid fa-location-dot"></i> Monterrey, Nuevo León, México</p>
         </div>
-      </div>
-      <div class="footer-bottom">
-        <p>&copy; 2024 Espacios 360. Todos los derechos reservados. | Monterrey, Nuevo León</p>
-        <a href="admin/login.html" class="admin-link">Admin</a>
       </div>
     </div>
   </footer>
@@ -221,19 +172,16 @@
         grid.innerHTML = props.map(p => propertyCard(p)).join('');
         initBookmarkButtons();
       }
-      // Stat counter
-      const total = await getTotalCount();
-      const el = document.getElementById('statProps');
-      let n = 0;
-      const step = Math.max(1, Math.ceil(total / 30));
-      const t = setInterval(() => {
-        n = Math.min(n + step, total);
-        el.textContent = n + '+';
-        if (n >= total) clearInterval(t);
-      }, 50);
+      
+      // Stat counter targeting the inline span
+      try {
+        const total = await getTotalCount();
+        const el = document.getElementById('statProps');
+        if(el && total) { el.textContent = total + '+'; }
+      } catch(e) {}
     })();
 
-    // Search
+    // Search logic
     document.getElementById('heroSearch').addEventListener('submit', e => {
       e.preventDefault();
       const q = document.getElementById('searchQuery').value;
@@ -245,6 +193,8 @@
       if (op) p.set('operacion', op);
       window.location.href = 'propiedades.html?' + p.toString();
     });
+
+    // Tab switcher
     document.querySelectorAll('.search-tab').forEach(t => {
       t.addEventListener('click', () => {
         document.querySelectorAll('.search-tab').forEach(x => x.classList.remove('active'));

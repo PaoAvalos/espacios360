@@ -641,3 +641,35 @@ input, select, textarea { font-family: inherit; }
   .hero-search { padding: 16px; }
   .hero-stats { display: none; }
 }
+
+/* ─── Compact Hero (Retention Layout) ───────────────────────────── */
+.compact-hero {
+  /* Uses your navbar height variable to prevent overlap */
+  padding: calc(var(--nav-h) + 40px) 20px 40px; 
+  background: var(--gray-50);
+  border-bottom: 1px solid var(--gray-200);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.compact-hero-content {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+.compact-hero .hero-title {
+  font-size: clamp(1.8rem, 4vw, 2.5rem);
+  font-weight: 800;
+  color: var(--navy);
+  margin-bottom: 24px;
+}
+.compact-hero .hero-search {
+  /* Overrides the original dark hero shadow for a lighter daytime shadow */
+  box-shadow: var(--shadow); 
+  max-width: 850px; /* Made slightly wider to fit horizontal inputs */
+}
+.immediate-properties {
+  padding-top: 40px !important; 
+}
